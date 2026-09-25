@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="Калькулятор">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="manifest" href="manifest.json">
+<title>Калькулятор</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body {
+    font-family: -apple-system, sans-serif;
+    background: #000; height: 100vh;
+    display: flex; flex-direction: column;
+    padding: 8px; gap: 8px;
+    user-select: none;
+  }
+  .display {
+    flex: 1;
+    color: #fff;
+    font-size: 72px;
+    font-weight: 200;
+    display: flex;
+    align-items: flex-end;
+    justify-content: flex-end;
+    padding: 20px;
+    overflow: hidden;
+    word-break: break-all;
+  }
+  .row { display: flex; gap: 8px; flex: 1; }
+  button {
+    flex: 1;
+    border: none;
+    border-radius: 50px;
+    font-size: 28px;
+    font-weight: 500;
+    color: #fff;
+    background: #333;
+    cursor: pointer;
+    transition: opacity 0.1s;
+  }
+  button:active { opacity: 0.6; }
+  .gray { background: #a5a5a5; color: #000; }
+  .orange { background: #ff9500; }
+  .zero { flex: 2; }
+</style>
+</head>
+<body>
+  <div class="display" id="display">0</div>
+  <div class="row">
+    <button class="gray" onclick="press('AC')">AC</button>
+    <button class="gray" onclick="press('+/-')">+/−</button>
+    <button class="gray" onclick="press('%')">%</button>
+    <button class="orange" onclick="press('÷')">÷</button>
+  </div>
+  <div class="row">
+    <button onclick="press('7')">7</button>
+    <button onclick="press('8')">8</button>
+    <button onclick="press('9')">9</button>
+    <button class="orange" onclick="press('×')">×</button>
+  </div>
+  <div class="row">
+    <button onclick="press('4')">4</button>
+    <button onclick="press('5')">5</button>
+    <button onclick="press('6')">6</button>
+    <button class="orange" onclick="press('−')">−</button>
+  </div>
+  <div class="row">
+    <button onclick="press('1')">1</button>
+    <button onclick="press('2')">2</button>
+    <button onclick="press('3')">3</button>
+    <button class="orange" onclick="press('+')">+</button>
+  </div>
+  <div class="row">
+    <button class="zero" onclick="press('0')">0</button>
+    <button onclick="press('.')">.</button>
+    <button class="orange" onclick="press('=')">=</button>
+  </div>
+
+<script>
+let current = '0', previous = null, operation = null, resetNext = false;
+const display = document.getElementById('display');
+
+function update() { display.textContent = current; }
+
+function press(k) {
+  if ('0123456789'.includes(k)) {
+    if (resetNext || current === '0') { current = k; resetNext = false; }
+    else if (current.length < 12) current += k;
+  } else if (k === '.') {
+    if (resetNext) { current = '0.'; resetNext = false; }
+    else if (!current.includes('.')) current += '.';
+  } else if (['+','−','×','÷'].includes(k)) {
+    if (operation && !resetNext) calculate();
+    previous = parseFloat(current);
+    operation = k;
+    resetNext = true;
+  } else if (k === '=') { calculate(); }
+  else if (k === 'AC') { current='0'; previous=null; operation=null; resetNext=false; }
+  else if (k === '+/-') { if (current !== '0') current = current.startsWith('-') ? current.slice(1) : '-' + current; }
+  else if (k === '%') { current = String(parseFloat(current) / 100); }
+  update();
+}
+
+function calculate() {
+  if (operation === null || previous === null) return;
+  const curr = parseFloat(current);
+  let result;
+  if (operation === '+') result = previous + curr;
+  else if (operation === '−') result = previous - curr;
+  else if (operation === '×') result = previous * curr;
+  else if (operation === '÷') {
+    if (curr === 0) { current = 'Ошибка'; operation = null; previous = null; resetNext = true; return; }
+    result = previous / curr;
+  }
+  current = Number.isInteger(result) ? String(result) : String(parseFloat(result.toFixed(10)));
+  previous = null; operation = null; resetNext = true;
+}
+
+// Регистрация service worker для офлайн-работы
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('service-worker.js');
+}
+</script>
+</body>
+</html>
